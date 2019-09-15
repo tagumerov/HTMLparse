@@ -6,9 +6,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import org.apache.commons.io.FilenameUtils;
 
 
 public class Main {
@@ -31,15 +33,16 @@ public class Main {
             e.printStackTrace();
         }
     }
-    public static void downloadFromURL (String urlStr, String downloadDirectory) throws IOException {
+    public static void downloadFromURL (String urlStr, String downloadDirectory) throws MalformedURLException {
         URL url = new URL(urlStr);
-        String fileName = urlStr.substring(urlStr.lastIndexOf("/")+1);;
-        ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-        FileOutputStream fos = new FileOutputStream(downloadDirectory + fileName);
-        fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-        logger.info("Создан файл {}", downloadDirectory + fileName);
-        fos.close();
-        rbc.close();
+        try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+             FileOutputStream fos = new FileOutputStream(downloadDirectory + FilenameUtils.getName(url.getPath()))) {
+            fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+            logger.info("Создан файл {}", downloadDirectory + FilenameUtils.getName(url.getPath()));
+        } catch (IOException e) {
+            logger.error(e);
+            e.printStackTrace();
+        }
     }
 
 }
